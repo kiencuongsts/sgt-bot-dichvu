@@ -125,6 +125,9 @@ del{color:var(--muted);font-family:var(--f-mono);font-size:12px}
 table.lines{width:100%;border-collapse:collapse;font-size:12.5px}
 table.lines td{padding:4px 0;border-bottom:1px dashed var(--line);vertical-align:top}
 table.lines td:last-child{text-align:right;white-space:nowrap;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+table.lines td:nth-child(2),table.lines td:nth-child(3){text-align:right;white-space:nowrap;padding-left:8px;font-size:12px}
+table.lines td:last-child{padding-left:8px}
+table.lines tr.lh td{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-family:var(--f-body);border-bottom:1px solid var(--line)}
 table.lines tr.sum td{border-bottom:0;font-weight:600}
 ul.why{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
 ul.why li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:4px}
@@ -341,6 +344,7 @@ function role(name){
   if(/phong|room|villa|suite|\/phong|deluxe|superior|premier|grand/.test(n)) return {r:'room'};
   return {r:'other'};
 }
+const UNIT={vehicle:'xe',room:'phòng',single:'phòng'};const unitOf=ro=>'/'+(UNIT[ro.r]||'khách');
 const ROLE_VI={adult:'Người lớn',child:'Trẻ em',senior:'Cao tuổi',infant:'Em bé',vehicle:'Theo xe',group:'Theo nhóm',room:'Theo phòng',single:'Phụ thu phòng đơn',addon:'Tuỳ chọn thêm',other:'Chưa rõ'};
 
 function ageRange(p){const n=norm(p.name+' '+(p.sd||''));let m=n.match(/(\d+)\s*(?:-|den|toi)\s*(\d+)\s*tuoi/);if(m)return [+m[1],+m[2]];
@@ -413,6 +417,9 @@ function price(tt,req){
     const o=lines.find(l=>l.ro.r==='other')||lines[0];
     if(o){add(o,N,'mỗi khách');notes.push('Không nhận ra loại dòng giá, tạm tính theo đầu khách với dòng đầu tiên');conf='thấp'} else block.push('Loại này chưa có bảng giá');
   }
+  // gộp các dòng trùng price_id (payload quantities là map theo price_id)
+  for(let i=used.length-1;i>0;i--){const j=used.findIndex(u=>u.l.p.id===used[i].l.p.id);if(j<i){used[j].q+=used[i].q;used[j].why+=', '+used[i].why;used.splice(i,1)}}
+  if(req.nat){const tn=norm(tt.name);if(req.nat==='vn'&&/khach nuoc ngoai|nguoi nuoc ngoai/.test(tn))block.push('Gói này dành cho khách nước ngoài');if(req.nat==='foreign'&&/khach viet nam|nguoi viet nam|khach viet\b/.test(tn))block.push('Gói này dành cho khách Việt Nam')}
   for(const u of used){const p=u.l.p;
     if(p.min&&u.q<p.min){warn.push(p.name+': tối thiểu '+p.min+', đã nâng số lượng');u.q=p.min}
     if(p.max&&u.q>p.max) block.push(p.name+': tối đa '+p.max)}
@@ -525,7 +532,7 @@ function reqOf(st){return {dest:st.dest||'',cats:st.cats||[],A:st.A??2,C:st.C||0
 function readReq(){return reqOf(ST)}
 let QC=null;function quick(st){const k=JSON.stringify(st);if(QC&&QC.k===k)return QC.v;const v=analyze(reqOf(st));QC={k,v};return v}
 function durations(st){return [...new Set(baseCands(st).flatMap(s=>s.tt.map(t=>t.days)).filter(Boolean))].sort((a,b)=>a-b)}
-function hasNatLines(st){return baseCands(st).some(s=>s.tt.some(t=>t.p.some(p=>role(p.name).r==='adult'&&/nuoc ngoai|viet nam/.test(norm(p.name)))))}
+function hasNatLines(st){return baseCands(st).some(s=>s.tt.some(t=>/khach nuoc ngoai|nguoi nuoc ngoai|khach viet nam|nguoi viet nam/.test(norm(t.name))||t.p.some(p=>role(p.name).r==='adult'&&/nuoc ngoai|viet nam/.test(norm(p.name)))))}
 function discrim(st){const ok=quick(st).ok,cnt={},lab={};
   ok.forEach(r=>{const seen=new Set();(r.s.kw||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(k=>{const n=norm(k);
     if(n.length<3||n.split(' ').length>3||seen.has(n)||r.s.dest.some(d=>norm(d)===n)||(st.dest&&norm(st.dest)===n))return;seen.add(n);cnt[n]=(cnt[n]||0)+1;lab[n]=lab[n]||k})});
@@ -718,7 +725,7 @@ function resultCard(x,rank,req){
       <div class="score"><span>Độ phù hợp</span><span class="bar"><i style="width:${best.score}%"></i></span><b class="num">${best.score}%</b><span class="chip ${confC}">Tin cậy giá: ${pr.conf}</span></div>
       <div class="cols">
         <div><div class="label" style="margin-bottom:4px">Gói đề xuất: ${esc(tt.name)}${tt.days?' · '+tt.days+' ngày':''}${alt?` <span class="muted" style="text-transform:none;letter-spacing:0">(+${alt} gói khác)</span>`:''}</div>
-          <table class="lines">${pr.used.map(u=>`<tr><td>${esc(u.l.p.name)} <span class="muted">× ${u.q}</span></td><td>${vnd(u.l.p.price*u.q)}</td></tr>`).join('')}<tr class="sum"><td>Tổng</td><td>${vnd(pr.total)}</td></tr></table>
+          <table class="lines"><tr class="lh"><td>Mức giá</td><td>Đơn giá</td><td>SL</td><td>Thành tiền</td></tr>${pr.used.map(u=>`<tr><td>${esc(u.l.p.name)}</td><td class="num">${vnd(u.l.p.price)}<span class="muted">${unitOf(u.l.ro)}</span></td><td class="num">× ${u.q}</td><td>${vnd(u.l.p.price*u.q)}</td></tr>`).join('')}<tr class="sum"><td colspan="3">Tổng</td><td>${vnd(pr.total)}</td></tr></table>
           ${pr.extras.length?`<div class="muted" style="font-size:12px;margin-top:4px">Tuỳ chọn thêm: ${pr.extras.map(p=>esc(p.name)+' '+short(p.price)).join(' · ')}</div>`:''}
         </div>
         <ul class="why">${why}</ul>
@@ -834,7 +841,7 @@ function openDetail(id){
         <td class="r num">${p.min??0}–${p.max??'∞'}</td><td class="r price">${vnd(p.price)}</td></tr>`}).join('')}
       </table></div>
       <div style="padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:space-between">
-        <span>Với yêu cầu hiện tại (${req.A} NL, ${req.C} TE, ${req.S} cao tuổi, ${dmy(req.date)}): ${pr.used.map(u=>esc(u.l.p.name)+' × '+u.q).join(', ')||'—'}</span>
+        <span>Với yêu cầu hiện tại (${req.A} NL, ${req.C} TE, ${req.S} cao tuổi, ${dmy(req.date)}): ${pr.used.map(u=>esc(u.l.p.name)+' '+vnd(u.l.p.price)+' × '+u.q+' = '+vnd(u.l.p.price*u.q)).join('; ')||'—'}</span>
         <span>${dc.length||pr.block.length?`<span class="chip bad">${esc([...dc,...pr.block][0])}</span>`:`<b class="price">${vnd(pr.total)}</b>`}</span></div></div>`}).join('');
   $('#dlg').innerHTML=`<div class="dbar"><button type="button" class="btn sm" id="dclose">Đóng</button></div>
    <div class="dhead"><img class="thumb" src="${THUMBS[s.id]||''}" alt="">
