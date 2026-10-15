@@ -35,6 +35,11 @@ blob='const META='+json.dumps(meta,ensure_ascii=False)+';\nconst SERVICES='+json
 blob=blob.replace('</','<\\/')
 tpl=open(ROOT+'src/template.html',encoding='utf-8').read()
 out=tpl.replace('/*__DATA__*/',blob)
+# Trang độc lập (GitHub Pages / mở file trực tiếp): bọc khung HTML đầy đủ
+out=('<!doctype html><html lang="vi"><head><meta charset="utf-8">'
+     '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+     '<style>body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>'
+     '</head><body>'+out+'</body></html>')
 open(ROOT+'index.html','w',encoding='utf-8').write(out)
 json.dump({'source':meta['source'],'fetched_at':meta['fetched_at'],'count':len(KB),'categories':list(cats.values()),'services':KB},open(ROOT+'services_kb.json','w',encoding='utf-8'),ensure_ascii=False,indent=1)
 print(len(out)//1024,'KB html')
