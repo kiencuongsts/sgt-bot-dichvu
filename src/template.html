@@ -898,7 +898,7 @@ function initData(){
     return `<tr><td><a data-preset="${i}" href="#">${esc(p.n)}</a></td><td style="font-size:12px" class="muted">${esc(chips.join(' · ')||'—')}</td>
       <td style="font-size:12px">${asks.length?asks.map(a=>`<span class="chip warn">${esc(a)}</span>`).join(' '):'<span class="chip ok">Đủ</span>'}</td><td class="num" style="text-align:right">${r.ok.length}</td>
       <td>${t1?`${esc(t1.s.title)}<div class="muted" style="font-size:12px">${esc(t1.best.tt.name)} · <span class="price">${vnd(t1.best.pr.total)}</span> · ${t1.best.score}%</div>`:'<span class="chip bad">Không có</span>'}</td></tr>`}).join('');
-  $('#srcinfo').innerHTML=`<p>Dữ liệu lấy từ <b>SGT Channel API sandbox</b> (<code>${esc(META.source)}</code>) lúc <b>${esc(META.fetched_at.replace('T',' ').slice(0,16))}</b> qua 3 endpoint: <code>GET /services/filters</code>, <code>GET /services</code> (2 trang × 100) và <code>GET /services/{id}</code> cho từng dịch vụ. Ảnh là bản thu nhỏ nhúng sẵn; gallery đầy đủ xem ở trang gốc.</p>
+  $('#srcinfo').innerHTML=`<p>Dữ liệu lấy từ <b>SGT Channel API ${META.env==='production'?'production':'sandbox'}</b> (<code>${esc(META.source)}</code>) lúc <b>${esc(META.fetched_at.replace('T',' ').slice(0,16))}</b> qua 3 endpoint: <code>GET /services/filters</code>, <code>GET /services</code> (2 trang × 100) và <code>GET /services/{id}</code> cho từng dịch vụ. Ảnh là bản thu nhỏ nhúng sẵn; gallery đầy đủ xem ở trang gốc.</p>
   <p><b>Cách bộ tư vấn tính tiền:</b> mỗi dịch vụ có nhiều <i>loại dịch vụ</i> (ticket_types); khách chỉ chọn một loại. Bộ tư vấn thử từng loại, kiểm tra ngày (đặt trước <code>booking_lead_time</code> giờ, không quá <code>expiry_date</code>, nằm trong <code>available_dates</code> nếu có, khớp thứ trong tuần nếu tên gói ghi rõ), rồi gán số khách vào từng dòng giá theo tên: người lớn / trẻ em / cao tuổi, theo nhóm, theo xe, theo phòng. Tổng = Σ giá × số lượng, đúng cách API tính khi giữ chỗ. Kết quả có nút <b>Payload giữ chỗ</b> để thử ngay <code>POST /bookings/hold</code>.</p>
   <p><b>Điểm phù hợp</b> (0–100%): điểm đến 30 · loại dịch vụ 15 · từ khoá sở thích 20 · ngân sách 20 · số ngày 10 · đánh giá 5 · có giá trẻ em 3 · ưu đãi 3. Tiêu chí khách không nêu thì không tính. Dịch vụ sai điểm đến/loại hoặc không đặt được vào ngày đó bị loại khỏi danh sách đề xuất.</p>
   <p><b>Độ tin cậy giá</b>: <span class="chip ok">cao</span> khi map thẳng người lớn/trẻ em; <span class="chip warn">trung bình</span> khi phải giả định (nhóm, xe, phòng, theo mùa); <span class="chip bad">thấp</span> khi không nhận ra dòng giá.</p>
@@ -920,7 +920,7 @@ function showTab(t){
   store.set('sgt.tab',t);
 }
 $('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)showTab(b.dataset.tab)});
-$('#srcline').textContent='Sandbox · '+SERVICES.length+' dịch vụ · dữ liệu ngày '+dmy(META.fetched_at.slice(0,10));
+$('#srcline').textContent=(META.env==='production'?'Production':'Sandbox')+' · '+SERVICES.length+' dịch vụ · dữ liệu ngày '+dmy(META.fetched_at.slice(0,10));
 initAdvisor(); initCatalog(); initData();
 const h=location.hash.replace('#',''); showTab(['tuvan','danhmuc','dulieu'].includes(h)?h:(store.get('sgt.tab')||'tuvan'));
 })();

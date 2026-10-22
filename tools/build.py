@@ -30,7 +30,7 @@ for s in d['services']:
 cats={int(o['value']):o['label'] for o in d['filters']['categories'] if o['group']}
 used=set(x for s in S for x in s['dest'])
 dests=[o for o in d['filters']['destinations'] if o['label'] in used]
-meta={'fetched_at':d['fetched_at'],'cats':cats,'dests':dests,'price_ranges':d['filters']['price_ranges'],'source':'https://sandbox.saigontourist.me/channel/v1'}
+meta={'fetched_at':d['fetched_at'],'cats':cats,'dests':dests,'price_ranges':d['filters']['price_ranges'],'source':d.get('source','https://sandbox.saigontourist.me/channel/v1'),'env':d.get('environment','sandbox')}
 blob='const META='+json.dumps(meta,ensure_ascii=False)+';\nconst SERVICES='+json.dumps(S,ensure_ascii=False,separators=(',',':'))+';\nconst THUMBS='+json.dumps({int(k):v for k,v in th.items()},separators=(',',':'))+';'
 blob=blob.replace('</','<\\/')
 tpl=open(ROOT+'src/template.html',encoding='utf-8').read()

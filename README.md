@@ -1,6 +1,6 @@
 # SGT Service Lab
 
-Microsite thử nghiệm công cụ **Tư vấn chọn dịch vụ tự động** của Saigontourist. Dữ liệu lấy từ SGT Channel API (sandbox).
+Microsite thử nghiệm công cụ **Tư vấn chọn dịch vụ tự động** của Saigontourist. Dữ liệu lấy từ SGT Channel API (production: `https://platform.saigontourist.net/channel/v1`).
 
 ## Tính năng
 
@@ -22,13 +22,23 @@ Microsite thử nghiệm công cụ **Tư vấn chọn dịch vụ tự động*
 
 ## Cập nhật dữ liệu
 
+Tạo file `.env` ở thư mục gốc (đã nằm trong `.gitignore`, **không commit**):
+
+```
+SGT_API_BASE=https://platform.saigontourist.net/channel/v1
+SGT_CLIENT_ID=...
+SGT_CLIENT_SECRET=...
+SGT_WEBHOOK_SECRET=...
+```
+
+Rồi chạy:
+
 ```bash
-export SGT_CLIENT_ID=...        # không commit thông tin đăng nhập
-export SGT_CLIENT_SECRET=...
-# export SGT_API_BASE=https://sandbox.saigontourist.me   (mặc định)
 python3 tools/fetch.py
 python3 tools/thumbs.py
 python3 tools/build.py
 ```
+
+Có thể đặt các biến trên bằng `export` thay cho file `.env`. Đổi `SGT_API_BASE` sang `https://sandbox.saigontourist.me/channel/v1` để dùng sandbox.
 
 Cần Python 3 và Pillow (`pip install pillow`) cho bước tạo ảnh thu nhỏ.

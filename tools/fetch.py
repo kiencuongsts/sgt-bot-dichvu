@@ -1,6 +1,14 @@
 import json,os,sys,urllib.request,urllib.error,time
-B=os.environ.get('SGT_API_BASE','https://sandbox.saigontourist.me')+'/channel/v1'
-out=sys.argv[1] if len(sys.argv)>1 else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'data','services.json')
+ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Đọc .env (không commit) nếu có; biến môi trường đặt sẵn được ưu tiên
+envf=os.path.join(ROOT,'.env')
+if os.path.exists(envf):
+    for line in open(envf):
+        if '=' in line and not line.lstrip().startswith('#'):
+            k,v=line.strip().split('=',1); os.environ.setdefault(k,v)
+B=os.environ.get('SGT_API_BASE','https://sandbox.saigontourist.me/channel/v1').rstrip('/')
+if not B.endswith('/channel/v1'): B+='/channel/v1'
+out=sys.argv[1] if len(sys.argv)>1 else os.path.join(ROOT,'data','services.json')
 def req(path,data=None,tok=None):
     h={'Accept':'application/json','Content-Type':'application/json'}
     if tok: h['Authorization']='Bearer '+tok
@@ -24,5 +32,5 @@ details=[]
 for s in items:
     try: details.append(req(f"/services/{s['id']}",tok=tok)['data'])
     except Exception as e: print('fail',s['id'],e)
-json.dump({'fetched_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'filters':filters,'services':details},open(out,'w'),ensure_ascii=False)
+json.dump({'fetched_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'source':B,'environment':t.get('environment'),'filters':filters,'services':details},open(out,'w'),ensure_ascii=False)
 print('services',len(items),'details',len(details))
